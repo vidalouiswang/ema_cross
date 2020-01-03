@@ -1,8 +1,11 @@
 var EMA = require("./ema");
 var Cross = require('./cross');
 var http = require('http');
+var Tools = require("./tools");
 var url = require("url");
 var MailgunSender = require('./mailgun-sender');
+var Sqlite3Tools = require('./sqlite3-tools');
+var dbLog = new Sqlite3Tools("log.db");
 var ms;
 let fs = require("fs");
 fs.readFile("./apikey.txt",{encoding:"utf-8"},function(err,data){
@@ -14,32 +17,40 @@ var lastEmaA = 0, lastEmaB = 0;
 var timer;
 var VALVE = 0.5;
 var notified = [];
+var log = "";
 
 function checkCross(Coin, Interval, N1, N2, Count, Valve) {
     //console.log("开始执行任务");
-    new EMA({ coin: Coin, count: Count, n: N1, interval: Interval }, function (ema1) {
-        new EMA({ coin: Coin, count: Count, n: N2, interval: Interval }, function (ema2) {
-            new Cross(ema1, ema2, Valve, function (cro) {
-                let lastOne = cro[cro.length - 1];
-                let f = true;
-                for (let i of notified) {
-                    if (i == lastOne.time) {
-                        f = false;
-                        break;
+    Tools.GetTimeStampFromTaobao(function(startTime){
+        new EMA({ coin: Coin, count: Count, n: N1, interval: Interval }, function (ema1) {
+            new EMA({ coin: Coin, count: Count, n: N2, interval: Interval }, function (ema2) {
+                new Cross(ema1, ema2, Valve, function (cro) {
+                    let lastOne = cro[cro.length - 1];
+                    let f = true;
+                    for (let i of notified) {
+                        if (i == lastOne.time) {
+                            f = false;
+                            break;
+                        }
                     }
-                }
-                if (f) {
-                    if (lastEmaA != lastOne.emaA || lastEmaB != lastOne.emaB) {
-                        lastEmaA = lastOne.emaA;
-                        lastEmaB = lastOne.emaB;
-                        //console.log("需要通知");
-                        notify(Coin, N1, N2, Interval, lastOne);
-                        notified.push(lastOne.time);
+                    if (f) {
+                        if (lastEmaA != lastOne.emaA || lastEmaB != lastOne.emaB) {
+                            lastEmaA = lastOne.emaA;
+                            lastEmaB = lastOne.emaB;
+                            //console.log("需要通知");
+                            dbLog.newLog("t: " + startTime + ", ea: " + lastOne.emaA + ", eb: " + lastOne.emaB + ", s: y");
+                            notify(Coin, N1, N2, Interval, lastOne);
+                            notified.push(lastOne.time);
+                        }else{
+                            dbLog.newLog("t: " + startTime + ", ea: " + lastOne.emaA + ", eb: " + lastOne.emaB + ", s: n");
+                        }
                     }
-                }
+                });
             });
         });
     });
+
+    
 };
 
 function notify(coin, n1, n2, interval, obj) {
@@ -67,6 +78,8 @@ let server = http.createServer(function (req, res) {
         subject: "更改阈值通知", content: "阈值由" + VALVE.toString() + "更改为" + query.valve });
         VALVE = parseFloat(query.valve);
         res.end("success");
+    }else if(req.url.indexOf("showlog")){
+
     }
 });
 

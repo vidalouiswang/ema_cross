@@ -1,3 +1,18 @@
+let ut = require('./unit-test');
+
+(function unitTest() {
+    ut.isEqual("Millis2Time", "2020/01/01 17:08:18", Millis2Time(new Date(1577869698070).getTime()));
+
+})();
+
+
+function GetTimeStampFromTaobao(callback) {
+    getSrc("http://api.m.taobao.com/rest/api3.do?api=mtop.common.getTimestamp", this.options, function (src) {
+        timeStamp = JSON.parse(src)['data']['t'];
+        callback(timeStamp);
+    });
+}
+
 
 function Millis2Time(millis) {
     let obj = new Date(millis);
@@ -16,17 +31,17 @@ function Millis2Time(millis) {
     sec = sec.length == 1 ? "0" + sec : sec;
 
     return (year + "/" + month + "/" + day + " " + hour + ":" + min + ":" + sec).toString();
-}
+};
 
-function getSrc(url,options,fun) {
+function getSrc(url, options, fun) {
     let obj;
     options.url = url;
-    if(url.indexOf("https") == 0){
+    if (url.indexOf("https") == 0) {
         obj = require('https');
-    }else{
+    } else {
         obj = require('http');
     }
-    
+
     obj.get(url, options, function (res) {
         var html = '';
         res.on('data', function (data) {
@@ -37,15 +52,16 @@ function getSrc(url,options,fun) {
             fun(html);
         });
 
-        res.on('error', function(){
+        res.on('error', function () {
             fun(undefined);
         });
     }).on('error', function () {
         fun(undefined);
     });
-}
+};
 
 module.exports = {
     Millis2Time,
-    getSrc
+    getSrc,
+    GetTimeStampFromTaobao
 }
