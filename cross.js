@@ -131,21 +131,30 @@ class Cross {
         try {
             clearInterval(this.timer);
         } catch (error) { }
+        this.timer = setInterval(this.loadEMA, this.refreshInterval);
+    }
+    loadEMA(){
         let me = this;
-        this.timer = setInterval(function () {
-            if (!me.finding) {
-                new EMA({ coin: me.coin, count: me.count, n: me.n1, interval: me.interval }, function (ema) {
-                    me.checkReadyA(ema);
-                });
-                new EMA({ coin: me.coin, count: me.count, n: me.n2, interval: me.interval }, function (ema) {
-                    me.checkReadyB(ema);
-                });
-            }
-        }, this.refreshInterval);
+        if (!this.finding) {
+            new EMA({ coin: this.coin, count: this.count, n: this.n1, interval: this.interval }, function (ema) {
+                me.checkReadyA(ema);
+            });
+            new EMA({ coin: this.coin, count: this.count, n: this.n2, interval: this.interval }, function (ema) {
+                me.checkReadyB(ema);
+            });
+        }
     }
     changeSpeed(refreshInterval) {
         this.refreshInterval = refreshInterval;
         this.load();
+    }
+    stop(){
+        try {
+            clearInterval(this.timer);
+        } catch (error) { }
+    }
+    start(){
+        this.timer = setInterval(this.loadEMA, this.refreshInterval);
     }
 }
 module.exports = Cross;
