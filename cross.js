@@ -20,7 +20,6 @@ class Cross {
         this.resultJson = undefined;
         let me = this;
         this.finding = false;
-        this.load();
 
         this.readyCallback = function () {
             if (me.ema1 && me.ema2) {
@@ -127,12 +126,6 @@ class Cross {
             this.readyCallback();
         }
     }
-    load() {
-        try {
-            clearInterval(this.timer);
-        } catch (error) { }
-        this.timer = setInterval(this.loadEMA, this.refreshInterval);
-    }
     loadEMA(){
         let me = this;
         if (!this.finding) {
@@ -146,7 +139,7 @@ class Cross {
     }
     changeSpeed(refreshInterval) {
         this.refreshInterval = refreshInterval;
-        this.load();
+        this.start();
     }
     stop(){
         try {
@@ -154,6 +147,9 @@ class Cross {
         } catch (error) { }
     }
     start(){
+        try {
+            clearInterval(this.timer);
+        } catch (error) { }
         this.timer = setInterval(this.loadEMA, this.refreshInterval);
     }
 }
